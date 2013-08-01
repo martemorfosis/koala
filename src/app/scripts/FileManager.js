@@ -42,6 +42,9 @@ if (!fs.existsSync(exports.userExtensionsDir)) {
 if (!fs.existsSync(exports.userLocalesDir)) {
     fs.mkdirSync(exports.userLocalesDir);
 }
+if (!fs.existsSync(exports.userCacheDir)) {
+    fs.mkdirSync(exports.userCacheDir);
+}
 // Migration
 if (exports.oldUserDataDir !== exports.userDataDir && fs.existsSync(exports.oldUserDataDir)) {
     fs.readdirSync(exports.oldUserDataDir).forEach(function (fileName) {

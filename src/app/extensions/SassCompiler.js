@@ -128,11 +128,8 @@ SassCompiler.prototype.sassCompileFile = function (file, done) {
     // reset the sass cache location, because the default location is the app root dir.
     argv.push('--cache-location "' + path.join(FileManager.userCacheDir, '.sass-cache') + '"');
 
-    var command = self.getSassCmd();
-        command += ' ' + argv.join(' ');
-
-    exec(command, {timeout: 5000}, function (error, stdout, stderr) {
-        if (error !== null) {
+    exec([self.getSassCmd()].concat(argv).join(' '), {timeout: 5000}, function (error, stdout, stderr) {
+        if (error) {
             done(error);
         } else {
             done();
@@ -193,9 +190,9 @@ SassCompiler.prototype.compassCompileFile = function (file, done) {
         argv.push('--debug-info');
     }
     
-    var command = self.getCompassCmd(projectConfig.useSystemCommand) + ' ' + argv.join(' ');
+    var command = [self.getCompassCmd(projectConfig.useSystemCommand)].concat(argv).join(' ');
     exec(command, {cwd: projectDir, timeout: 5000}, function (error, stdout, stderr) {
-        if (error !== null) {
+        if (error) {
             done(error);
         } else {
             done();
@@ -214,7 +211,7 @@ SassCompiler.prototype.compassCompileFile = function (file, done) {
  */
 SassCompiler.prototype.getImports = function (srcFile) {
     //match imports from code
-    var reg = /@import\s+[\"\']([^\.]+?|.+?sass|.+?scss)[\"\']/g,
+    var reg = /@import\s+["']([^.]+?|.*\.(sass|scss))["']/g,
         result, item, file,
 
         //get fullpath of imports
@@ -223,7 +220,7 @@ SassCompiler.prototype.getImports = function (srcFile) {
         fullPathImports = [],
 
         code = fs.readFileSync(srcFile, 'utf8');
-        code = code.replace(/\/\/.+?[\r\t\n]/g, '').replace(/\/\*[\s\S]+?\*\//g, '');
+        code = code.replace(/\/\/.+?[\r\t\n]|\/\*[\s\S]+?\*\//g, '');
 
     while ((result = reg.exec(code)) !== null ) {
         item = result[1];

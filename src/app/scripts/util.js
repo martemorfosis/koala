@@ -84,7 +84,7 @@ exports.isObject = function (obj) {
  */
 exports.replaceJsonComments = function (content) {
     if (!content) return '';
-    return content.replace(/\".+?\"|\'.+?\'/g, function (s) {
+    return content.replace(/".+?"|'.+?'/g, function (s) {
         return s.replace(/\/\//g, '@_@');
     }).replace(/\s*?\/\/.*?[\n\r]|[\t\r\n]/g, '').replace(/@_@/g, '//');
 };

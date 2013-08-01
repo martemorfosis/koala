@@ -282,7 +282,7 @@ LessCompiler.prototype.compileFileWithCommand = function (file, done) {
 
 LessCompiler.prototype.getImports = function (srcFile) {
     //match imports from code
-    var reg = /@import\s+[\"\']([^\.]+?|.+?less)[\"\']/g,
+    var reg = /@import\s+["']([^.]+?|.+?less)["']/g,
         result, item, file,
 
         //get fullpath of imports
@@ -291,7 +291,7 @@ LessCompiler.prototype.getImports = function (srcFile) {
         fullPathImports = [],
 
         code = fs.readFileSync(srcFile, 'utf8');
-        code = code.replace(/\/\/.+?[\r\t\n]/g, '').replace(/\/\*[\s\S]+?\*\//g, '');
+        code = code.replace(/\/\/.+?[\r\t\n]|\/\*[\s\S]+?\*\//g, '');
 
     while ((result = reg.exec(code)) !== null ) {
         item = result[1];
