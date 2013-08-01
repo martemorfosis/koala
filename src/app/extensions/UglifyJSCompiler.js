@@ -16,16 +16,6 @@ function UglifyJSCompiler(config) {
 require('util').inherits(UglifyJSCompiler, Compiler);
 module.exports = UglifyJSCompiler;
 
-UglifyJSCompiler.prototype.compileFile = function (file, done) {
-    // compile file with command
-    var globalSettings = this.getGlobalSettings();
-    if (globalSettings.advanced.useCommand) {
-        this.compileFileWithCommand(file, done);
-    } else {
-        this.compileFileWithLib(file, done);
-    }
-};
-
 UglifyJSCompiler.prototype.compileFileWithLib = function (file, done) {
     var UglifyJS = require('uglify-js'),
         options = file.settings,
@@ -68,34 +58,6 @@ UglifyJSCompiler.prototype.compileFileWithLib = function (file, done) {
             }
         }.bind(index));
     }
-};
-
-/**
- * compile file with system command
- * @param  {Object} file file object to compiler
- * @param  {Object} done done callback
- */
-UglifyJSCompiler.prototype.compileFileWithCommand = function (file, done) {
-    var exec         = require('child_process').exec,
-        filePath     = file.src,
-        output       = file.output,
-        compressOpts = {},
-        imports      = this._getImports(filePath),
-        files        = imports.prepend.concat('"' + filePath + '"', imports.append),
-        argv;
-
-
-    argv = files.map(function (importedFilePath) {
-        return '"' + importedFilePath + '"';
-    });
-    argv.push('-o "' + output + '"');
-
-    exec([this.getCommandPath('uglifyjs')].concat(argv).join(' '), {timeout: 5000}, function (err) {
-        done(err);
-        if (!err) {
-            fileWatcher.addImports(this.getImports(filePath), filePath);
-        }
-    }.bind(this));
 };
 
 UglifyJSCompiler.prototype.getImports = function (srcFile) {
