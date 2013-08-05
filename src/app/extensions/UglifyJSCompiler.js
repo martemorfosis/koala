@@ -16,15 +16,74 @@ function UglifyJSCompiler(config) {
 require('util').inherits(UglifyJSCompiler, Compiler);
 module.exports = UglifyJSCompiler;
 
+var _getImports = function (srcFile) {
+    //match imports from code
+    var reg = /@koala-(prepend|append)\s+["']([^.]+?|.+?js)["']/g,
+        result, type, importPath,
+
+        //get fullpath of imports
+        dirname = path.dirname(srcFile),
+        fullPathImports = {prepend: [], append: []},
+
+        code = fs.readFileSync(srcFile, 'utf8');
+
+    while ((result = reg.exec(code)) !== null) {
+        type = result[1];
+        importPath = result[2];
+        if (path.extname(importPath) !== '.js') {
+            importPath += '.js';
+        }
+
+        importPath = path.resolve(dirname, importPath);
+
+        if (fs.existsSync(importPath)) {
+            fullPathImports[type].push(importPath);
+        }
+    }
+
+    return fullPathImports;
+};
+
+var getCombinedFile = function (filePath, importedFiles) {
+    if (typeof importedFiles === "undefined") {
+        importedFiles = [];
+    }
+
+    if (importedFiles.indexOf(filePath) !== -1) {
+        return [];
+    }
+
+    var importsFilter = function (importedFilePath) {
+        return importedFiles.indexOf(importedFilePath) === -1;
+    };
+
+    importedFiles.push(filePath);
+
+    var files = _getImports(filePath);
+    
+    var prepend = [];
+    files.prepend.forEach(function (importedFilePath) {
+        if (importsFilter(importedFilePath)) {
+            prepend.push.apply(prepend, getCombinedFile(importedFilePath, importedFiles));
+        }
+    });
+
+    var append = [];
+    files.append.forEach(function (importedFilePath) {
+        if (importsFilter(importedFilePath)) {
+            append.push.apply(append, getCombinedFile(importedFilePath, importedFiles));
+        }
+    });
+
+    return prepend.concat(filePath, append);
+};
+
 UglifyJSCompiler.prototype.compileFileWithLib = function (file, done) {
     var UglifyJS = require('uglify-js'),
         options = file.settings,
-        abort = false, index, numberOfRemainingFiles,
-        files;
-
-    files = this._getImports(file.src);
-    files = files.prepend.concat(file.src, files.append);
-    numberOfRemainingFiles = files.length;
+        abort = false,
+        files = getCombinedFile(file.src),
+        numberOfRemainingFiles = files.length, index;
 
     var minify = function () {
         try {
@@ -61,34 +120,6 @@ UglifyJSCompiler.prototype.compileFileWithLib = function (file, done) {
 };
 
 UglifyJSCompiler.prototype.getImports = function (srcFile) {
-    var imports = this._getImports(srcFile);
+    var imports = _getImports(srcFile);
     return imports.prepend.concat(imports.append);
-};
-
-UglifyJSCompiler.prototype._getImports = function (srcFile) {
-    //match imports from code
-    var reg = /@koala-(prepend|append)\s+["']([^.]+?|.+?js)["']/g,
-        result, type, importPath,
-
-        //get fullpath of imports
-        dirname = path.dirname(srcFile),
-        fullPathImports = {prepend: [], append: []},
-
-        code = fs.readFileSync(srcFile, 'utf8');
-
-    while ((result = reg.exec(code)) !== null) {
-        type = result[1];
-        importPath = result[2];
-        if (path.extname(importPath) !== '.js') {
-            importPath += '.js';
-        }
-
-        importPath = path.resolve(dirname, importPath);
-
-        if (fs.existsSync(importPath)) {
-            fullPathImports[type].push(importPath);
-        }
-    }
-
-    return fullPathImports;
 };
