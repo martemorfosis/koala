@@ -52,25 +52,20 @@ var getCombinedFile = function (filePath, importedFiles) {
     if (importedFiles.indexOf(filePath) !== -1) {
         return [];
     }
-
-    var importsFilter = function (importedFilePath) {
-        return importedFiles.indexOf(importedFilePath) === -1;
-    };
+    var prepend = [],
+        append  = [],
+        files   = _getImports(filePath);
 
     importedFiles.push(filePath);
 
-    var files = _getImports(filePath);
-    
-    var prepend = [];
     files.prepend.forEach(function (importedFilePath) {
-        if (importsFilter(importedFilePath)) {
+        if (importedFiles.indexOf(importedFilePath) === -1) {
             prepend.push.apply(prepend, getCombinedFile(importedFilePath, importedFiles));
         }
     });
 
-    var append = [];
     files.append.forEach(function (importedFilePath) {
-        if (importsFilter(importedFilePath)) {
+        if (importedFiles.indexOf(importedFilePath) === -1) {
             append.push.apply(append, getCombinedFile(importedFilePath, importedFiles));
         }
     });
@@ -79,32 +74,30 @@ var getCombinedFile = function (filePath, importedFiles) {
 };
 
 UglifyJSCompiler.prototype.compileFileWithLib = function (file, done) {
-    var UglifyJS = require('uglify-js'),
-        options = file.settings,
+    var files = getCombinedFile(file.src),
+        
+        minify = function () {
+            var UglifyJS = require('uglify-js'),
+                options  = file.settings;
+            try {
+                // write output
+                fs.writeFile(file.output, UglifyJS.minify(files, {fromString: true}).code, "utf8", function (err) {
+                    if (err) {
+                        return done(err);
+                    }
+
+                    done();
+
+                    fileWatcher.addImports(this.getImports(file.src), file.src);
+                }.bind(this));
+            } catch (err) {
+                done(err);
+            }
+        }.bind(this),
+
         abort = false,
-        files = getCombinedFile(file.src),
-        numberOfRemainingFiles = files.length, index;
-
-    var minify = function () {
-        try {
-            // write output
-            fs.writeFile(file.output, UglifyJS.minify(files, {fromString: true}).code, "utf8", function (err) {
-                if (err) {
-                    return done(err);
-                }
-
-                done();
-
-                fileWatcher.addImports(this.getImports(file.src), file.src);
-            }.bind(this));
-        } catch (err) {
-            done(err);
-        }
-    }.bind(this);
-
-    // read code
-    for (index = 0; index < files.length && !abort; index++) {
-        fs.readFile(files[index], "utf8", function (err, code) {
+        numberOfRemainingFiles = files.length,
+        gotCode = function (err, code) {
             if (err) {
                 abort = true;
                 return done(err);
@@ -115,7 +108,13 @@ UglifyJSCompiler.prototype.compileFileWithLib = function (file, done) {
             if (numberOfRemainingFiles === 0) {
                 minify();
             }
-        }.bind(index));
+        },
+
+        index;
+
+    // read code
+    for (index = 0; index < files.length && !abort; index++) {
+        fs.readFile(files[index], "utf8", gotCode.bind(index));
     }
 };
 
