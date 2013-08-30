@@ -12,20 +12,9 @@
 
 		"main": "LessCompiler.js",
 
-		// Test
-		"maintainer": {
-			"name": "Ethan Lai",
-			"email": "lain.z.q@gmail.com",
-			"web": "http://oklai.name",
-			"project": "http://github.com/oklai/koala"
-		},
-
 		"contributors": [
 			{"name": "Ziad Khoury","web": "https://github.com/zaygraveyard"}
 		],
-
-		"isExtension": true,
-		// End test
 
 		"fileTypes": [{
 			"extension": "less", 
@@ -389,5 +378,64 @@
 		],
 
 		"libraries": ["uglify-js@2.3.6"]
+	},
+
+
+	// CSS min Compiler
+	{
+		"name": "cssmin",
+
+		"display": "CSS",
+
+		"version": "1.0.0",
+
+		"koalaVersion": ">=1.5.0",
+
+		"main": "CssCompiler.js",
+
+		"maintainer": {
+			"name": "hahnzhu",
+			"email": "hahn.chu91@gmail.com",
+			"web": "https://github.com/hahnzhu",
+			"project": "http://github.com/oklai/koala"
+		},
+
+		"fileTypes": [{
+			"extension": "css", 
+			"output": "css",
+			"icon": "../../assets/img/filetypes/css.png",
+			"category": "style",
+			"watch": false
+		}],
+
+		// File Options
+		"options": [
+			{
+				"type": "checkbox",
+				"name": "combineImport",
+				"display": "Combine Import",
+				"default": false
+			},
+			{
+				"type": "droplist",
+				"name": "outputStyle",
+				"display": "Output Style",
+				"items": [
+					{
+						"value": "compress",
+						"text": "compress"
+					},
+					{
+						"value": "yuicompress",
+						"text": "yuicompress"
+					}
+				],
+				"default": "compress"
+			}
+		],
+
+		// Advanced Options
+		"advanced": []
 	}
+
 ]
